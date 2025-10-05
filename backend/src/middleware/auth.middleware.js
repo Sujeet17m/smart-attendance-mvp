@@ -1,22 +1,74 @@
+// const jwt = require('jsonwebtoken');
+// const { User } = require('../models/user.model');
+
+// exports.authenticate = async (req, res, next) => {
+//   try {
+//     const token = req.headers.authorization?.split(' ')[1];
+//     if (!token) {
+//       return res.status(401).json({ error: 'No token provided' });
+//     }
+
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findByPk(decoded.id);
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     req.user = user;
+//     next();
+//   } catch (error) {
+//     res.status(401).json({ error: 'Invalid token' });
+//   }
+// };
+
+
 const jwt = require('jsonwebtoken');
-const { User } = require('../models/user.model');
+const config = require('../config');
+const { unauthorizedResponse } = require('../utils/response.util');
+const logger = require('../utils/logger.util');
 
-exports.authenticate = async (req, res, next) => {
+/**
+ * JWT Authentication Middleware
+ */
+module.exports = (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    // Get token from header
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return unauthorizedResponse(res, 'No token provided');
+    }
+
+    // Check if Bearer token
+    if (!authHeader.startsWith('Bearer ')) {
+      return unauthorizedResponse(res, 'Invalid token format');
+    }
+
+    // Extract token
+    const token = authHeader.substring(7);
+
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return unauthorizedResponse(res, 'No token provided');
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    // Verify token
+    const decoded = jwt.verify(token, config.jwt.secret);
 
-    req.user = user;
+    // Attach user to request
+    req.user = decoded;
+
     next();
+
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    if (error.name === 'TokenExpiredError') {
+      return unauthorizedResponse(res, 'Token expired');
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return unauthorizedResponse(res, 'Invalid token');
+    }
+
+    logger.error('Auth middleware error:', error);
+    return unauthorizedResponse(res, 'Authentication failed');
   }
 };
