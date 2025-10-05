@@ -1,0 +1,29 @@
+# Python version (use .python-version instead for pyenv)
+.python-version
+
+# Virtual environment
+venv/
+env/
+.env
+
+# IDE files
+.vscode/
+.idea/
+
+# Compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution/packaging
+dist/
+build/
+*.egg-info/
+
+# Test coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# Face data
+face_data/
