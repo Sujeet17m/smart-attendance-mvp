@@ -68,3 +68,18 @@ volumes:
     driver: local
   n8n_data:
     driver: local
+
+  services:
+  face-service:
+    build: ./face-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./face-service/storage:/app/storage  # Mount storage directory
+      - ./face-service/logs:/app/logs
+    environment:
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/app/storage/faces
+    env_file:
+      - ./face-service/.env
+

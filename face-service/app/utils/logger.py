@@ -1,93 +1,44 @@
-"""
-Logging Configuration
-"""
-
-import sys
 import logging
+import sys
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from loguru import logger
-from app.config import settings
 
 
-class InterceptHandler(logging.Handler):
-    """
-    Intercept standard logging and redirect to loguru
-    """
+def setup_logger(name: str, level: str = "INFO"):
+    """Setup logger with console and file handlers"""
     
-    def emit(self, record):
-        # Get corresponding Loguru level if it exists
-        try:
-            level = logger.level(record.levelname).name
-        except ValueError:
-            level = record.levelno
-
-        # Find caller from where originated the logged message
-        frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
-
-        logger.opt(depth=depth, exception=record.exc_info).log(
-            level, record.getMessage()
-        )
-
-
-def setup_logger(name: str = None) -> logger:
-    """
-    Setup loguru logger
+    logger = logging.getLogger(name)
+    logger.setLevel(getattr(logging, level.upper()))
     
-    Args:
-        name: Logger name
-        
-    Returns:
-        Configured logger instance
-    """
+    # Avoid duplicate handlers
+    if logger.handlers:
+        return logger
     
-    # Remove default logger
-    logger.remove()
-    
-    # Create logs directory
-    log_dir = Path(settings.LOG_FILE).parent
-    log_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Console handler with colors
-    logger.add(
-        sys.stdout,
-        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        level=settings.LOG_LEVEL,
-        colorize=True
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_format = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
+    console_handler.setFormatter(console_format)
     
     # File handler
-    logger.add(
-        settings.LOG_FILE,
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
-        level=settings.LOG_LEVEL,
-        rotation="10 MB",
-        retention="7 days",
-        compression="zip",
-        serialize=settings.LOG_FORMAT == "json"
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+    
+    file_handler = RotatingFileHandler(
+        log_dir / "face_service.log",
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=5
     )
-    
-    # Error file handler
-    logger.add(
-        settings.LOG_FILE.replace(".log", "-error.log"),
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
-        level="ERROR",
-        rotation="10 MB",
-        retention="30 days",
-        compression="zip"
+    file_handler.setLevel(logging.DEBUG)
+    file_format = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
     )
+    file_handler.setFormatter(file_format)
     
-    # Intercept standard logging
-    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
-    
-    # Suppress noisy loggers
-    for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
-        logging.getLogger(logger_name).handlers = [InterceptHandler()]
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
     
     return logger
-
-
-# Create default logger
-default_logger = setup_logger(__name__)

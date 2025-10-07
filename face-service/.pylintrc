@@ -1,0 +1,11 @@
+[MASTER]
+ignore=tests,venv,.venv
+
+[MESSAGES CONTROL]
+disable=C0111,C0103,R0913,W0703
+
+[FORMAT]
+max-line-length=100
+
+[BASIC]
+good-names=i,j,k,ex,Run,_,e,id,x,y,w,h

@@ -18,95 +18,139 @@
 Configuration Management
 """
 
+# import os
+# from typing import List
+# from pydantic_settings import BaseSettings
+
+
+# class Settings(BaseSettings):
+#     # Application
+#     APP_NAME: str = "Smart-Tend Face Recognition"
+#     HOST: str = "0.0.0.0"
+#     PORT: int = 8002
+#     DEBUG: bool = False
+    
+#     # CORS
+#     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5000"]
+    
+#     # Database
+#     POSTGRES_HOST: str = "localhost"
+#     POSTGRES_PORT: int = 5432
+#     POSTGRES_DB: str = "smart_attendance"
+#     POSTGRES_USER: str = "postgres"
+#     POSTGRES_PASSWORD: str = "password"
+    
+#     # AWS S3
+#     AWS_ACCESS_KEY_ID: str = ""
+#     AWS_SECRET_ACCESS_KEY: str = ""
+#     AWS_REGION: str = "us-east-1"
+#     S3_BUCKET_NAME: str = "smart-attend-faces"
+    
+#     # Face Detection Settings
+#     DETECTION_CONFIDENCE: float = 0.7
+#     MIN_FACE_SIZE: int = 80
+#     MAX_FACES_PER_FRAME: int = 50
+    
+#     # Face Recognition Settings
+#     RECOGNITION_THRESHOLD: float = 0.6
+#     EMBEDDING_SIZE: int = 512
+    
+#     # Liveness Detection
+#     ENABLE_LIVENESS: bool = True
+#     LIVENESS_THRESHOLD: float = 0.85
+    
+#     # Processing
+#     VIDEO_FRAME_RATE: int = 2  # Process 2 frames per second
+#     MAX_VIDEO_DURATION: int = 10  # seconds
+#     BATCH_SIZE: int = 16
+    
+#     # GPU
+#     USE_GPU: bool = True
+#     GPU_DEVICE: int = 0
+    
+#     # Logging
+#     LOG_LEVEL: str = "INFO"
+    
+#     class Config:
+#         env_file = ".env"
+#         case_sensitive = True
+
+
+# settings = Settings()
+
 import os
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field
 
 
 class Settings(BaseSettings):
-    """Application settings"""
-    
     # Application
-    APP_NAME: str = Field(default="Face Recognition Service")
-    APP_ENV: str = Field(default="development")
-    DEBUG: bool = Field(default=True)
+    APP_NAME: str = "Smart-Tend Face Recognition"
+    HOST: str = "0.0.0.0"
+    PORT: int = 8002
+    DEBUG: bool = False
     
-    # Server
-    HOST: str = Field(default="0.0.0.0")
-    PORT: int = Field(default=8000)
-    WORKERS: int = Field(default=1)
+    # CORS
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5000"]
     
     # Database
-    DB_HOST: str = Field(default="localhost")
-    DB_PORT: int = Field(default=5432)
-    DB_NAME: str = Field(default="attendance")
-    DB_USER: str = Field(default="postgres")
-    DB_PASSWORD: str = Field(default="postgres123")
-    DB_POOL_SIZE: int = Field(default=5)
-    DB_MAX_OVERFLOW: int = Field(default=10)
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "smart_attendance"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres123"
     
-    # Face Detection
-    FACE_CONFIDENCE_THRESHOLD: float = Field(default=0.9)
-    MIN_FACE_SIZE: int = Field(default=20)
-    MTCNN_THRESHOLDS: str = Field(default="0.6,0.7,0.9")
+    # Storage Settings - AWS is OPTIONAL
+    STORAGE_TYPE: str = "local"  # Options: "local" or "s3"
+    LOCAL_STORAGE_PATH: str = "./storage/faces"  # Local storage directory
     
-    # Face Recognition
-    RECOGNITION_THRESHOLD: float = Field(default=0.75)
-    EMBEDDING_DIMENSION: int = Field(default=512)
-    MODEL_VERSION: str = Field(default="v1.0")
+    # AWS S3 (Optional - only needed if STORAGE_TYPE="s3")
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: Optional[str] = None
     
-    # Video Processing
-    VIDEO_FRAME_SAMPLING_RATE: int = Field(default=3)
-    MAX_VIDEO_DURATION: int = Field(default=10)
-    BATCH_SIZE: int = Field(default=8)
-    MAX_FACES_PER_FRAME: int = Field(default=50)
+    # Face Detection Settings
+    DETECTION_CONFIDENCE: float = 0.7
+    MIN_FACE_SIZE: int = 80
+    MAX_FACES_PER_FRAME: int = 50
     
-    # Performance
-    USE_GPU: bool = Field(default=False)
-    GPU_MEMORY_FRACTION: float = Field(default=0.7)
-    MAX_WORKERS: int = Field(default=4)
+    # Face Recognition Settings
+    RECOGNITION_THRESHOLD: float = 0.6
+    EMBEDDING_SIZE: int = 512
     
-    # Model Paths
-    MODEL_PATH: str = Field(default="/app/models")
-    FACENET_MODEL: str = Field(default="vggface2")
-    MTCNN_DEVICE: str = Field(default="cpu")
+    # Liveness Detection
+    ENABLE_LIVENESS: bool = True
+    LIVENESS_THRESHOLD: float = 0.85
+    
+    # Processing
+    VIDEO_FRAME_RATE: int = 2
+    MAX_VIDEO_DURATION: int = 10
+    BATCH_SIZE: int = 16
+    
+    # GPU
+    USE_GPU: bool = False
+    GPU_DEVICE: int = 0
     
     # Logging
-    LOG_LEVEL: str = Field(default="INFO")
-    LOG_FILE: str = Field(default="/app/logs/face-service.log")
-    LOG_FORMAT: str = Field(default="json")
+    LOG_LEVEL: str = "INFO"
     
-    # API Security
-    API_KEY: str = Field(default="")
-    ALLOWED_ORIGINS: str = Field(default="*")
-    
-    # AWS
-    AWS_REGION: str = Field(default="us-east-1")
-    AWS_ACCESS_KEY_ID: str = Field(default="")
-    AWS_SECRET_ACCESS_KEY: str = Field(default="")
+    def is_s3_enabled(self) -> bool:
+        """Check if S3 storage is enabled and configured"""
+        return (
+            self.STORAGE_TYPE == "s3" and
+            self.AWS_ACCESS_KEY_ID is not None and
+            self.AWS_SECRET_ACCESS_KEY is not None and
+            self.S3_BUCKET_NAME is not None
+        )
     
     class Config:
         env_file = ".env"
         case_sensitive = True
-    
-    @property
-    def database_url(self) -> str:
-        """Get PostgreSQL connection URL"""
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-    
-    @property
-    def mtcnn_thresholds_list(self) -> List[float]:
-        """Parse MTCNN thresholds"""
-        return [float(x) for x in self.MTCNN_THRESHOLDS.split(",")]
-    
-    @property
-    def allowed_origins_list(self) -> List[str]:
-        """Parse allowed origins"""
-        if self.ALLOWED_ORIGINS == "*":
-            return ["*"]
-        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
 
-# Create settings instance
 settings = Settings()
+
+# Create local storage directory if using local storage
+if settings.STORAGE_TYPE == "local":
+    os.makedirs(settings.LOCAL_STORAGE_PATH, exist_ok=True)

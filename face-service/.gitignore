@@ -1,29 +1,45 @@
-# Python version (use .python-version instead for pyenv)
-.python-version
-
-# Virtual environment
-venv/
-env/
-.env
-
-# IDE files
-.vscode/
-.idea/
-
-# Compiled Python files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Distribution/packaging
-dist/
-build/
-*.egg-info/
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Models
+app/models/*.caffemodel
+app/models/*.prototxt
+app/models/*.pth
+app/models/*.h5
 
 # Test coverage
-.coverage
-coverage.xml
 htmlcov/
+.coverage
+.pytest_cache/
 
-# Face data
-face_data/
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
